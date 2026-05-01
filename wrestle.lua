@@ -5,7 +5,8 @@ local ts = game:GetService("TeleportService")
 local uis = game:GetService("UserInputService")
 local vim = game:GetService("VirtualInputManager")
 local rep = game:GetService("ReplicatedStorage")
-local CoreGui = game:GetService("CoreGui")
+-- Using gethui() for Xeno support
+local CoreGui = (gethui and gethui()) or game:GetService("CoreGui")
 local lp = plrs.LocalPlayer
 
 -- globals
@@ -54,8 +55,20 @@ task.spawn(function()
     end
 end)
 
--- ui init (Obsidian)
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/main/Library.lua"))()
+-- SAFE LOAD (Adapted for Executor compatibility)
+local Library
+do
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/main/Library.lua"))()
+    end)
+
+    if success and result then
+        Library = result
+    else
+        warn("UI failed to load. Check executor compatibility or internet connection.")
+        return
+    end
+end
 
 local Window = Library:CreateWindow({
     Title = "WRESTLE!",
@@ -289,8 +302,8 @@ SettingsBox:AddButton("Unload UI", function() Library:Unload() end)
 CreditsGroupBox:AddLabel("Made by Repzz & Ross")
 CreditsGroupBox:AddLabel("UI Library: Obsidian")
 
--- SCREEN GUI FPS/UPTIME
-local gui = Instance.new("ScreenGui", game.CoreGui)
+-- SCREEN GUI FPS/UPTIME (Now using safe CoreGui definition)
+local gui = Instance.new("ScreenGui", CoreGui)
 local info = Instance.new("TextLabel", gui)
 info.Size, info.Position = UDim2.new(0, 200, 0, 50), UDim2.new(1, -210, 1, -60)
 info.BackgroundTransparency, info.TextSize = 1, 14
@@ -303,7 +316,7 @@ rs.RenderStepped:Connect(function(dt)
     info.Text = string.format("FPS: %d | Uptime: %dm %ds", math.floor(1/dt), math.floor(u/60), u%60)
 end)
 
--- ESP & AUTO-HITBOX FOR NEW PLAYERS
+-- ESP & AUTO-HITBOX FOR NEW PLAYERS (Using safe CoreGui definition)
 local ESPFolder = CoreGui:FindFirstChild("RepzESP") or Instance.new("Folder", CoreGui)
 ESPFolder.Name = "RepzESP"
 
@@ -343,7 +356,7 @@ task.spawn(function()
     end
 end)
 
--- ENHITBOX APPLIES WHEN PLAYERS RESPAWN
+-- ENSURE HITBOX APPLIES WHEN PLAYERS RESPAWN
 plrs.PlayerAdded:Connect(function(p)
     p.CharacterAdded:Connect(function(char)
         task.wait(1)
