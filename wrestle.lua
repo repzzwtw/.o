@@ -343,7 +343,7 @@ task.spawn(function()
     end
 end)
 
--- ENSURE HITBOX APPLIES WHEN PLAYERS RESPAWN
+-- ENHITBOX APPLIES WHEN PLAYERS RESPAWN
 plrs.PlayerAdded:Connect(function(p)
     p.CharacterAdded:Connect(function(char)
         task.wait(1)
