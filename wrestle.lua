@@ -1,12 +1,27 @@
 -- services & locals
-local plrs, rs, ts, uis, vim, rep = game:GetService("Players"), game:GetService("RunService"), game:GetService("TeleportService"), game:GetService("UserInputService"), game:GetService("VirtualInputManager"), game:GetService("ReplicatedStorage")
+local plrs = game:GetService("Players")
+local rs = game:GetService("RunService")
+local ts = game:GetService("TeleportService")
+local uis = game:GetService("UserInputService")
+local vim = game:GetService("VirtualInputManager")
+local rep = game:GetService("ReplicatedStorage")
 local lp = plrs.LocalPlayer
 
 -- globals
-_G.HitboxSize = 5; _G.HitboxEnabled = false; _G.HitboxColor = Color3.fromRGB(128, 0, 128)
-_G.ESP = false; _G.InfJ = false; _G.Noclip = false; _G.AutoClick = false
-_G.DmgMult = false; _G.DmgVal = 1
-_G.SpamTag = false; _G.SpamCheer = false; _G.SpamB = false; _G.SpamDeserve = false; _G.SpamAwesome = false
+_G.HitboxSize = 5
+_G.HitboxEnabled = false
+_G.HitboxColor = Color3.fromRGB(128, 0, 128)
+_G.ESP = false
+_G.InfJ = false
+_G.Noclip = false
+_G.AutoClick = false
+_G.DmgMult = false
+_G.DmgVal = 1
+_G.SpamTag = false
+_G.SpamCheer = false
+_G.SpamB = false
+_G.SpamDeserve = false
+_G.SpamAwesome = false
 
 -- hook 
 local mt = getrawmetatable(game)
@@ -18,7 +33,7 @@ mt.__namecall = newcclosure(function(self, ...)
     local args = {...}
     if method == "FireServer" then
         local req = tostring(self)
-        if req:find("Purchase") or req:find("Buy") then return end -- drop purchases
+        if req:find("Purchase") or req:find("Buy") then return end 
         if _G.DmgMult and (req:find("Damage") or req:find("Hit")) then
             for _ = 1, (_G.DmgVal - 1) do old(self, unpack(args)) end
         end
@@ -34,11 +49,12 @@ local Window = Lib:MakeWindow({
     HidePremium = true,
     SaveConfig = true,
     ConfigFolder = "RepzWrestle",
-    Icon = "rbxassetid://119294576535598", -- W repz
-    IntroEnabled = false -- skip
+    Icon = "rbxassetid://119294576535598",
+    IntroEnabled = false,
+    Footer = ".gg/mVRWynJVCx for more scripts"
 })
 
--- tabs (with standard icons)
+-- tabs 
 local Main = Window:MakeTab({Name = "Main", Icon = "rbxassetid://773365636"})
 local Wres = Window:MakeTab({Name = "Wrestling", Icon = "rbxassetid://773380486"})
 local Troll = Window:MakeTab({Name = "Troll", Icon = "rbxassetid://773379966"})
@@ -46,7 +62,7 @@ local Lcl = Window:MakeTab({Name = "Local", Icon = "rbxassetid://773376404"})
 local Set = Window:MakeTab({Name = "Settings", Icon = "rbxassetid://773376510"})
 local Creds = Window:MakeTab({Name = "Credits", Icon = "rbxassetid://773378523"})
 
--- clicker thread
+-- threads & functions
 task.spawn(function()
     while task.wait(0.1) do
         if _G.AutoClick then
@@ -114,7 +130,6 @@ Troll:AddToggle({
     end
 })
 
--- Heartbeat loop for max speed spam
 Troll:AddToggle({
     Name = "Spam Cheer", Default = false,
     Callback = function(v)
@@ -161,7 +176,7 @@ Lcl:AddSlider({
     Callback = function(v) if lp.Character and lp.Character:FindFirstChild("Humanoid") then lp.Character.Humanoid.WalkSpeed = v end end
 })
 
--- settings / config
+-- settings 
 Set:AddLabel("Obsidian UI Configuration")
 Set:AddColorpicker({Name = "Hitbox/ESP Color", Default = Color3.fromRGB(128, 0, 128), Callback = function(v) _G.HitboxColor = v end})
 Set:AddButton({Name = "Save UI Configuration", Callback = function() Lib:SaveConfig() end})
