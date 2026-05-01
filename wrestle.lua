@@ -1,16 +1,17 @@
--- services & locals
+-- services
 local plrs = game:GetService("Players")
 local rs = game:GetService("RunService")
 local ts = game:GetService("TeleportService")
 local uis = game:GetService("UserInputService")
 local vim = game:GetService("VirtualInputManager")
 local rep = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
 local lp = plrs.LocalPlayer
 
 -- globals
 _G.HitboxSize = 5
 _G.HitboxEnabled = false
-_G.HitboxColor = Color3.fromRGB(128, 0, 128)
+_G.ThemeColor = Color3.fromRGB(139, 0, 0) -- Dark Red Theme
 _G.ESP = false
 _G.InfJ = false
 _G.Noclip = false
@@ -23,7 +24,7 @@ _G.SpamB = false
 _G.SpamDeserve = false
 _G.SpamAwesome = false
 
--- hook 
+-- hook (Damage multiplier)
 local mt = getrawmetatable(game)
 local old = mt.__namecall
 setreadonly(mt, false)
@@ -33,36 +34,16 @@ mt.__namecall = newcclosure(function(self, ...)
     local args = {...}
     if method == "FireServer" then
         local req = tostring(self)
-        if req:find("Purchase") or req:find("Buy") then return end 
         if _G.DmgMult and (req:find("Damage") or req:find("Hit")) then
-            for _ = 1, (_G.DmgVal - 1) do old(self, unpack(args)) end
+            for _ = 1, (_G.DmgVal - 1) do 
+                old(self, unpack(args)) 
+            end
         end
     end
     return old(self, ...)
 end)
 
--- ui init (obsidian)
-local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/obsidian.lua"))() or loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
-
-local Window = Lib:MakeWindow({
-    Name = "WRESTLE! | Premium Multi-Tool - made by repz lol",
-    HidePremium = true,
-    SaveConfig = true,
-    ConfigFolder = "RepzWrestle",
-    Icon = "rbxassetid://119294576535598",
-    IntroEnabled = false,
-    Footer = ".gg/mVRWynJVCx for more scripts"
-})
-
--- tabs 
-local Main = Window:MakeTab({Name = "Main", Icon = "rbxassetid://773365636"})
-local Wres = Window:MakeTab({Name = "Wrestling", Icon = "rbxassetid://773380486"})
-local Troll = Window:MakeTab({Name = "Troll", Icon = "rbxassetid://773379966"})
-local Lcl = Window:MakeTab({Name = "Local", Icon = "rbxassetid://773376404"})
-local Set = Window:MakeTab({Name = "Settings", Icon = "rbxassetid://773376510"})
-local Creds = Window:MakeTab({Name = "Credits", Icon = "rbxassetid://773378523"})
-
--- threads & functions
+-- clicker thread
 task.spawn(function()
     while task.wait(0.1) do
         if _G.AutoClick then
@@ -73,53 +54,158 @@ task.spawn(function()
     end
 end)
 
--- main
-Main:AddToggle({Name = "Universal Autoclicker", Default = false, Callback = function(v) _G.AutoClick = v end})
-Main:AddToggle({Name = "Damage Multiplier", Default = false, Callback = function(v) _G.DmgMult = v end})
-Main:AddTextbox({Name = "Multiplier Amount", Default = "1", TextDisappear = false, Callback = function(v) _G.DmgVal = tonumber(v) or 1 end})
+-- ui init (Obsidian)
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/main/Library.lua"))()
 
-Main:AddToggle({Name = "Enable Hitbox", Default = false, Callback = function(v) _G.HitboxEnabled = v end})
-Main:AddTextbox({Name = "Hitbox Size", Default = "5", TextDisappear = false, Callback = function(v) _G.HitboxSize = tonumber(v) or 5 end})
-Main:AddToggle({Name = "Dark Purple ESP", Default = false, Callback = function(v) _G.ESP = v end})
-
-Main:AddToggle({Name = "Infinite Jump", Default = false, Callback = function(v) _G.InfJ = v end})
-Main:AddToggle({Name = "Noclip", Default = false, Callback = function(v) _G.Noclip = v end})
-
--- wrestling
-Wres:AddDropdown({
-    Name = "Change tag team finishers",
-    Options = {"3D", "Assassination", "BTETrigger", "ChokeslamSpinebuster", "ClaymoreZigZag", "DeathDrop", "Doomsday", "DoubleChokeslam", "DoubleSuperkick", "ExtremeCombination", "F5RKO", "HighFlyingCombo", "MagicKiller", "MeltzerDriver", "ShatterMachine", "SkullCrushingFinale", "SuperkickParty"},
-    Default = "Select Finisher",
-    Callback = function(v) pcall(function() rep.Events.ChangeTeamFinisher:FireServer(v) end) end
+local Window = Library:CreateWindow({
+    Title = "WRESTLE!",
+    Footer = "made by repz, .gg/mVRWynJVCx for more scripts",
+    Icon = 121320758864056,
+    NotifySide = "Right",
+    ShowCustomCursor = true,
 })
 
-Wres:AddDropdown({
-    Name = "Change solo finisher",
-    Options = {"AnnouncersTableFrogSplash"},
-    Default = "Select Solo Finisher",
-    Callback = function(v) pcall(function() rep.Events.ChangeFinisher:FireServer(v) end) end
+-- tabs 
+local Tabs = {
+    Main = Window:AddTab("Main", "star"),
+    Wrestling = Window:AddTab("Wrestling", "sword"),
+    Troll = Window:AddTab("Troll", "smile"),
+    Local = Window:AddTab("Local", "user"),
+    Scripts = Window:AddTab("Scripts", "file"),
+    Settings = Window:AddTab("Settings", "settings"),
+    Credits = Window:AddTab("Credits", "award")
+}
+
+-- groupboxes
+local CombatBox = Tabs.Main:AddLeftGroupbox("Combat", "swords")
+local ESPBox = Tabs.Main:AddRightGroupbox("Hitbox & ESP", "eye")
+local MoveBox = Tabs.Main:AddLeftGroupbox("Movement", "navigation")
+
+local WresBox = Tabs.Wrestling:AddLeftGroupbox("Movesets (No Purchase Needed)", "sword")
+local PropBox = Tabs.Wrestling:AddRightGroupbox("Cosmetics & Props", "shirt")
+
+local InteractBox = Tabs.Troll:AddLeftGroupbox("Interactions", "users")
+local CrowdBox = Tabs.Troll:AddRightGroupbox("Crowd Sound Spam", "volume-2")
+
+local LocalBox = Tabs.Local:AddLeftGroupbox("Player Adjustments", "user")
+local ScriptsBox = Tabs.Scripts:AddLeftGroupbox("Useful Scripts", "file")
+local SettingsBox = Tabs.Settings:AddLeftGroupbox("UI & Server Configuration", "settings")
+local CreditsGroupBox = Tabs.Credits:AddLeftGroupbox("Credits", "award")
+
+-- MAIN TAB (Combat)
+CombatBox:AddToggle("AutoClick", {
+    Text = "Universal Autoclicker",
+    Default = false,
+    Callback = function(Value) _G.AutoClick = Value end
 })
 
-Wres:AddDropdown({
-    Name = "Equip Emote",
-    Options = {"angry", "backflip", "beast", "boom", "bow", "cheer", "chestbeat", "chicken", "confused", "coolwalk", "cry", "dance1", "dance2", "dance3", "dance4", "evilvillian", "flex1", "flex2", "flex3", "floss", "golfswing", "guitar", "headstand", "hype", "kick", "laugh", "loser", "lunge", "nod", "point", "poplock", "pose1", "pose2", "pose3", "pose4", "pose5", "pushups", "robot", "salute", "shrug", "sit", "sleep", "smug", "spiderman", "splits", "stomp", "tpose", "wave", "workout", "yawn", "yes"},
-    Default = "Select Emote",
-    Callback = function(v) pcall(function() rep.Events.PlayEmote:FireServer(v) end) end
+CombatBox:AddToggle("DmgMulti", {
+    Text = "Damage Multiplier",
+    Default = false,
+    Callback = function(Value) _G.DmgMult = Value end
 })
 
-Wres:AddDropdown({
-    Name = "Equip props",
-    Options = {"NewsShow", "Playground", "Throne", "Graveyard", "Podium", "Couch", "HospitalBed", "Coffin", "LockerRoom", "InterviewSet", "Ambulance", "PoliceCar", "Barricade", "Casket", "Chair", "Desk", "Dumpster", "Forklift", "Ladder", "Table", "TrashCan", "Wheelchair"},
-    Default = "Select Prop",
-    Callback = function(v) pcall(function() rep.Events.ChangePromoProp:FireServer(v) end) end
+CombatBox:AddInput("DmgValue", {
+    Text = "Multiplier Amount",
+    Default = "1",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "Enter Multiplier",
+    Callback = function(Value) _G.DmgVal = tonumber(Value) or 1 end
 })
 
--- troll
-Troll:AddToggle({
-    Name = "Spam-request tag teams", Default = false,
-    Callback = function(v)
-        _G.SpamTag = v
-        if v then task.spawn(function()
+-- MAIN TAB
+ESPBox:AddToggle("HitboxEnabled", {
+    Text = "Enable Hitbox",
+    Default = false,
+    Callback = function(Value)
+        _G.HitboxEnabled = Value
+        for _, v in pairs(plrs:GetPlayers()) do
+            if v ~= lp and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = v.Character.HumanoidRootPart
+                if Value then
+                    hrp.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+                    hrp.Transparency = 0.7
+                    hrp.Color = _G.ThemeColor
+                    hrp.CanCollide = false
+                else
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
+                end
+            end
+        end
+    end
+})
+
+ESPBox:AddInput("HitboxSize", {
+    Text = "Hitbox Size",
+    Default = "7,
+    Numeric = true,
+    Finished = true,
+    Placeholder = "Enter Size",
+    Callback = function(Value)
+        _G.HitboxSize = tonumber(Value) or 5
+        if _G.HitboxEnabled then
+            for _, v in pairs(plrs:GetPlayers()) do
+                if v ~= lp and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                    v.Character.HumanoidRootPart.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+                end
+            end
+        end
+    end
+})
+
+ESPBox:AddToggle("ESPEnabled", {
+    Text = "Dark Red ESP",
+    Default = false,
+    Callback = function(Value) _G.ESP = Value end
+})
+
+-- MAIN TAB (Movement)
+MoveBox:AddToggle("InfJumpToggle", {
+    Text = "Infinite Jump",
+    Default = false,
+    Callback = function(Value) _G.InfJ = Value end
+})
+
+MoveBox:AddToggle("NoclipToggle", {
+    Text = "Noclip",
+    Default = false,
+    Callback = function(Value) _G.Noclip = Value end
+})
+
+-- WRESTLING TAB
+WresBox:AddDropdown("TagFinisher", {
+    Values = {"3D", "Assassination", "BTETrigger", "ChokeslamSpinebuster", "ClaymoreZigZag", "DeathDrop", "Doomsday", "DoubleChokeslam", "DoubleSuperkick", "ExtremeCombination", "F5RKO", "HighFlyingCombo", "MagicKiller", "MeltzerDriver", "ShatterMachine", "SkullCrushingFinale", "SuperkickParty"},
+    Default = 1, Multi = false, Text = "Change tag team finishers",
+    Callback = function(Value) pcall(function() rep.Events.ChangeTeamFinisher:FireServer(Value) end) end
+})
+
+WresBox:AddDropdown("SoloFinisher", {
+    Values = {"AnnouncersTableFrogSplash"},
+    Default = 1, Multi = false, Text = "Change solo finisher",
+    Callback = function(Value) pcall(function() rep.Events.ChangeFinisher:FireServer(Value) end) end
+})
+
+PropBox:AddDropdown("EmoteSelect", {
+    Values = {"angry", "backflip", "beast", "boom", "bow", "cheer", "chestbeat", "chicken", "confused", "coolwalk", "cry", "dance1", "dance2", "dance3", "dance4", "evilvillian", "flex1", "flex2", "flex3", "floss", "golfswing", "guitar", "headstand", "hype", "kick", "laugh", "loser", "lunge", "nod", "point", "poplock", "pose1", "pose2", "pose3", "pose4", "pose5", "pushups", "robot", "salute", "shrug", "sit", "sleep", "smug", "spiderman", "splits", "stomp", "tpose", "wave", "workout", "yawn", "yes"},
+    Default = 1, Multi = false, Text = "Equip Emote",
+    Callback = function(Value) pcall(function() rep.Events.PlayEmote:FireServer(Value) end) end
+})
+
+PropBox:AddDropdown("PropSelect", {
+    Values = {"NewsShow", "Playground", "Throne", "Graveyard", "Podium", "Couch", "HospitalBed", "Coffin", "LockerRoom", "InterviewSet", "Ambulance", "PoliceCar", "Barricade", "Casket", "Chair", "Desk", "Dumpster", "Forklift", "Ladder", "Table", "TrashCan", "Wheelchair"},
+    Default = 1, Multi = false, Text = "Equip props",
+    Callback = function(Value) pcall(function() rep.Events.ChangePromoProp:FireServer(Value) end) end
+})
+
+-- TROLL TAB
+InteractBox:AddToggle("SpamTagTeam", {
+    Text = "Spam-request tag teams",
+    Default = false,
+    Callback = function(Value)
+        _G.SpamTag = Value
+        if Value then task.spawn(function()
             while _G.SpamTag do
                 for _, p in pairs(plrs:GetPlayers()) do
                     if p ~= lp then pcall(function() rep.Events.SendTagTeamRequest:FireServer(p) end) end
@@ -130,96 +216,166 @@ Troll:AddToggle({
     end
 })
 
-Troll:AddToggle({
-    Name = "Spam Cheer", Default = false,
-    Callback = function(v)
-        _G.SpamCheer = v
-        if v then task.spawn(function()
+CrowdBox:AddToggle("SpamCheerSnd", {
+    Text = "Spam Cheer",
+    Default = false,
+    Callback = function(Value)
+        _G.SpamCheer = Value
+        if Value then task.spawn(function()
             while _G.SpamCheer do pcall(function() rep.Events.TriggerCrowdSound:FireServer("C") end) rs.Heartbeat:Wait() end
         end) end
     end
 })
 
-Troll:AddToggle({
-    Name = "Spam B", Default = false,
-    Callback = function(v)
-        _G.SpamB = v
-        if v then task.spawn(function()
+CrowdBox:AddToggle("SpamBSnd", {
+    Text = "Spam B",
+    Default = false,
+    Callback = function(Value)
+        _G.SpamB = Value
+        if Value then task.spawn(function()
             while _G.SpamB do pcall(function() rep.Events.TriggerCrowdSound:FireServer("B") end) rs.Heartbeat:Wait() end
         end) end
     end
 })
 
-Troll:AddToggle({
-    Name = "Spam You deserve it! Chant", Default = false,
-    Callback = function(v)
-        _G.SpamDeserve = v
-        if v then task.spawn(function()
+CrowdBox:AddToggle("SpamDeserveSnd", {
+    Text = "Spam You deserve it! Chant",
+    Default = false,
+    Callback = function(Value)
+        _G.SpamDeserve = Value
+        if Value then task.spawn(function()
             while _G.SpamDeserve do pcall(function() rep.Events.TriggerCrowdSound:FireServer("you deserve it") end) rs.Heartbeat:Wait() end
         end) end
     end
 })
 
-Troll:AddToggle({
-    Name = "Spam This Is Awesome chant", Default = false,
-    Callback = function(v)
-        _G.SpamAwesome = v
-        if v then task.spawn(function()
+CrowdBox:AddToggle("SpamAwesomeSnd", {
+    Text = "Spam This Is Awesome chant",
+    Default = false,
+    Callback = function(Value)
+        _G.SpamAwesome = Value
+        if Value then task.spawn(function()
             while _G.SpamAwesome do pcall(function() rep.Events.TriggerCrowdSound:FireServer("this is awesome") end) rs.Heartbeat:Wait() end
         end) end
     end
 })
 
--- local
-Lcl:AddSlider({
-    Name = "WalkSpeed", Min = 16, Max = 250, Default = 16, Color = Color3.fromRGB(128,0,128), Increment = 1, ValueName = "Speed",
-    Callback = function(v) if lp.Character and lp.Character:FindFirstChild("Humanoid") then lp.Character.Humanoid.WalkSpeed = v end end
+-- LOCAL TAB
+LocalBox:AddSlider("WalkSpeed", {
+    Text = "WalkSpeed",
+    Min = 16, Max = 250, Default = 16, Rounding = 0,
+    Callback = function(Value) if lp.Character and lp.Character:FindFirstChild("Humanoid") then lp.Character.Humanoid.WalkSpeed = Value end end
 })
 
--- settings 
-Set:AddLabel("Obsidian UI Configuration")
-Set:AddColorpicker({Name = "Hitbox/ESP Color", Default = Color3.fromRGB(128, 0, 128), Callback = function(v) _G.HitboxColor = v end})
-Set:AddButton({Name = "Save UI Configuration", Callback = function() Lib:SaveConfig() end})
-Set:AddButton({Name = "Unload UI", Callback = function() Lib:Destroy() end})
+-- SCRIPTS TAB
+ScriptsBox:AddButton("Load Dark Dex", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
+end)
 
-Set:AddButton({
-    Name = "Serverhop", Callback = function()
-        local s, res = pcall(function() return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")) end)
-        if s then
-            for _, srv in pairs(res.data) do
-                if srv.playing < srv.maxPlayers and srv.id ~= game.JobId then ts:TeleportToPlaceInstance(game.PlaceId, srv.id) break end
-            end
+-- SETTINGS TAB
+SettingsBox:AddButton("Serverhop", function()
+    local s, res = pcall(function() return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")) end)
+    if s then
+        for _, srv in pairs(res.data) do
+            if srv.playing < srv.maxPlayers and srv.id ~= game.JobId then ts:TeleportToPlaceInstance(game.PlaceId, srv.id) break end
         end
     end
-})
-Set:AddButton({Name = "Rejoin Server", Callback = function() ts:TeleportToPlaceInstance(game.PlaceId, game.JobId) end})
+end)
 
--- credits
-Creds:AddLabel("Main developers: Repzz, Ross")
-Creds:AddLabel("Special thanks to the community for supporting :>")
+SettingsBox:AddButton("Rejoin Server", function() ts:TeleportToPlaceInstance(game.PlaceId, game.JobId) end)
+SettingsBox:AddButton("Unload UI", function() Library:Unload() end)
 
--- loops
+-- CREDITS TAB
+CreditsGroupBox:AddLabel("Made by Repzz & Ross")
+CreditsGroupBox:AddLabel("UI Library: Obsidian")
+
+-- SCREEN GUI FPS/UPTIME
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local info = Instance.new("TextLabel", gui)
+info.Size, info.Position = UDim2.new(0, 200, 0, 50), UDim2.new(1, -210, 1, -60)
+info.BackgroundTransparency, info.TextSize = 1, 14
+info.TextColor3 = _G.ThemeColor
+info.TextXAlignment, info.Font = Enum.TextXAlignment.Right, Enum.Font.Code
+
+local st = os.time()
+rs.RenderStepped:Connect(function(dt)
+    local u = os.time() - st
+    info.Text = string.format("FPS: %d | Uptime: %dm %ds", math.floor(1/dt), math.floor(u/60), u%60)
+end)
+
+-- ESP AND HITBOX
+local ESPFolder = CoreGui:FindFirstChild("RepzESP") or Instance.new("Folder", CoreGui)
+ESPFolder.Name = "RepzESP"
+
 task.spawn(function()
     while task.wait(0.5) do
         for _, v in pairs(plrs:GetPlayers()) do
             if v ~= lp and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                local hrp = v.Character.HumanoidRootPart
-                hrp.Size = _G.HitboxEnabled and Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize) or Vector3.new(2, 2, 1)
-                hrp.Transparency = _G.HitboxEnabled and 0.7 or 1
-                hrp.Color = _G.HitboxColor
-                
-                local hl = v.Character:FindFirstChild("GeminiESP")
+                local char = v.Character
+                local hrp = char.HumanoidRootPart
+
+                -- Highlight ESP
+                local hl = ESPFolder:FindFirstChild(v.Name .. "_ESP")
                 if _G.ESP then
-                    if not hl then hl = Instance.new("Highlight", v.Character); hl.Name = "GeminiESP" end
-                    hl.FillColor = _G.HitboxColor
-                elseif hl then hl:Destroy() end
+                    if not hl then 
+                        hl = Instance.new("Highlight")
+                        hl.Name = v.Name .. "_ESP"
+                        hl.Parent = ESPFolder
+                    end
+                    hl.Adornee = char
+                    hl.FillColor = _G.ThemeColor
+                    hl.OutlineColor = Color3.fromRGB(0, 0, 0)
+                    hl.FillTransparency = 0.5
+                    hl.OutlineTransparency = 0
+                else
+                    if hl then hl:Destroy() end
+                end
+            end
+        end
+        
+        -- cleanup
+        for _, hl in pairs(ESPFolder:GetChildren()) do
+            local plrName = string.gsub(hl.Name, "_ESP", "")
+            if not plrs:FindFirstChild(plrName) or not _G.ESP then
+                hl:Destroy()
             end
         end
     end
 end)
 
-uis.JumpRequest:Connect(function()
-    if _G.InfJ and lp.Character then lp.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") end
+-- HITBOX APPLIES WHEN PLAYER RESPAWNS YESS
+plrs.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function(char)
+        task.wait(1)
+        if _G.HitboxEnabled and p ~= lp then
+            local hrp = char:WaitForChild("HumanoidRootPart", 5)
+            if hrp then
+                hrp.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+                hrp.Transparency = 0.7
+                hrp.Color = _G.ThemeColor
+                hrp.CanCollide = false
+            end
+        end
+    end)
 end)
 
-Lib:Init()
+-- INFINITE JUMP
+uis.JumpRequest:Connect(function()
+    if _G.InfJ and lp.Character then
+        local humanoid = lp.Character:FindFirstChildOfClass("Humanoid")
+        local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+        if humanoid then humanoid:ChangeState("Jumping") end
+        if hrp then hrp.Velocity = Vector3.new(hrp.Velocity.X, 50, hrp.Velocity.Z) end
+    end
+end)
+
+-- NOCLIP
+rs.Stepped:Connect(function()
+    if _G.Noclip and lp.Character then
+        for _, v in pairs(lp.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end)
+
+Library:Notify("Repz Hub Loaded!", 5)
