@@ -8,6 +8,17 @@ local rep = game:GetService("ReplicatedStorage")
 local CoreGui = game:GetService("CoreGui")
 local lp = plrs.LocalPlayer
 
+-- EXECUTOR DETECTION & UNIVERSAL SUPPORT
+local function GetExecutor()
+    return (type(identifyexecutor) == "function" and identifyexecutor()) or "Unknown"
+end
+
+local CurrentExecutor = GetExecutor()
+local IsXeno = string.find(string.lower(CurrentExecutor), "xeno") ~= nil
+
+-- Safe (Supports Xeno, Delta, Wave, etc.)
+local SafeGUI = (type(gethui) == "function" and gethui()) or CoreGui
+
 -- globals
 _G.HitboxSize = 5
 _G.HitboxEnabled = false
@@ -24,24 +35,44 @@ _G.SpamB = false
 _G.SpamDeserve = false
 _G.SpamAwesome = false
 
--- hook (Damage multiplier)
-local mt = getrawmetatable(game)
-local old = mt.__namecall
-setreadonly(mt, false)
-
-mt.__namecall = newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    local args = {...}
-    if method == "FireServer" then
-        local req = tostring(self)
-        if _G.DmgMult and (req:find("Damage") or req:find("Hit")) then
-            for _ = 1, (_G.DmgVal - 1) do 
-                old(self, unpack(args)) 
+-- hook (Damage multiplier) - Universal Support
+local oldNamecall
+if type(hookmetamethod) == "function" then
+    -- Modern Executor Support (Xeno, Delta, etc.)
+    oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        if method == "FireServer" then
+            local req = tostring(self)
+            if _G.DmgMult and (req:find("Damage") or req:find("Hit")) then
+                for _ = 1, (_G.DmgVal - 1) do 
+                    oldNamecall(self, unpack(args)) 
+                end
             end
         end
-    end
-    return old(self, ...)
-end)
+        return oldNamecall(self, ...)
+    end))
+else
+    -- Fallback for older/legacy executors
+    local mt = getrawmetatable(game)
+    oldNamecall = mt.__namecall
+    setreadonly(mt, false)
+
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        if method == "FireServer" then
+            local req = tostring(self)
+            if _G.DmgMult and (req:find("Damage") or req:find("Hit")) then
+                for _ = 1, (_G.DmgVal - 1) do 
+                    oldNamecall(self, unpack(args)) 
+                end
+            end
+        end
+        return oldNamecall(self, ...)
+    end)
+    setreadonly(mt, true)
+end
 
 -- clicker thread
 task.spawn(function()
@@ -139,7 +170,7 @@ ESPBox:AddToggle("HitboxEnabled", {
 
 ESPBox:AddInput("HitboxSize", {
     Text = "Hitbox Size",
-    Default = "7,
+    Default = "7",
     Numeric = true,
     Finished = true,
     Placeholder = "Enter Size",
@@ -290,7 +321,9 @@ CreditsGroupBox:AddLabel("Made by Repzz & Ross")
 CreditsGroupBox:AddLabel("UI Library: Obsidian")
 
 -- SCREEN GUI FPS/UPTIME
-local gui = Instance.new("ScreenGui", game.CoreGui)
+local gui = Instance.new("ScreenGui")
+-- Using SafeGUI ensures the text doesn't easily get flagged by basic game checks
+gui.Parent = SafeGUI
 local info = Instance.new("TextLabel", gui)
 info.Size, info.Position = UDim2.new(0, 200, 0, 50), UDim2.new(1, -210, 1, -60)
 info.BackgroundTransparency, info.TextSize = 1, 14
@@ -300,11 +333,11 @@ info.TextXAlignment, info.Font = Enum.TextXAlignment.Right, Enum.Font.Code
 local st = os.time()
 rs.RenderStepped:Connect(function(dt)
     local u = os.time() - st
-    info.Text = string.format("FPS: %d | Uptime: %dm %ds", math.floor(1/dt), math.floor(u/60), u%60)
+    info.Text = string.format("FPS: %d | Uptime: %dm %ds | Exec: %s", math.floor(1/dt), math.floor(u/60), u%60, IsXeno and "Xeno" or CurrentExecutor)
 end)
 
 -- ESP AND HITBOX
-local ESPFolder = CoreGui:FindFirstChild("RepzESP") or Instance.new("Folder", CoreGui)
+local ESPFolder = SafeGUI:FindFirstChild("RepzESP") or Instance.new("Folder", SafeGUI)
 ESPFolder.Name = "RepzESP"
 
 task.spawn(function()
@@ -378,4 +411,8 @@ rs.Stepped:Connect(function()
     end
 end)
 
-Library:Notify("Repz Hub Loaded!", 5)
+if IsXeno then
+    Library:Notify("Repz Hub Loaded (Xeno Detected!)", 5)
+else
+    Library:Notify("Repz Hub Loaded (" .. CurrentExecutor .. ")", 5)
+end
