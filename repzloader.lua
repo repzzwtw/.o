@@ -19,7 +19,7 @@ local SCRIPTS = {
     },
     {
         name  = "Catalog Avatar Creator",
-        sub   = "Sniper | UI tools | Mobile and pc",
+        sub   = "Rainbow Avatar| UI tools | Mobile and pc",
         color = Color3.fromRGB(0,255,128),
         url   = "https://raw.githubusercontent.com/repzzwtw/.o/refs/heads/main/CAC.lua",
     },
